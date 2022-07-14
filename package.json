@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^1.0.2",
+    "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "@openzeppelin/contracts": "^4.7.0",
+    "hardhat": "^2.10.1"
+  },
+  "devDependencies": {
+    "erc721a": "^4.1.0"
+  }
+}
