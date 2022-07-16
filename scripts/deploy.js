@@ -7,6 +7,11 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
   const ContractFactory = await ethers.getContractFactory("Lemuria");
 
+  const deploymentData = ContractFactory.interface.encodeDeploy();
+  const estimatedGas = await ethers.provider.estimateGas({data: deploymentData});
+
+  console.log("Gas price: " + estimatedGas);
+
   const contract = await ContractFactory.deploy();
   console.log("Contract address:", contract.address);
 }
