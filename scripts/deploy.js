@@ -5,7 +5,7 @@ async function main() {
   const [ deployer ] = await ethers.getSigners();
 
   console.log("Deploying contracts with the account:", deployer.address);
-  const ContractFactory = await ethers.getContractFactory("Lemuria");
+  const ContractFactory = await ethers.getContractFactory("BlueDream");
 
   const deploymentData = ContractFactory.interface.encodeDeploy();
   const estimatedGas = await ethers.provider.estimateGas({data: deploymentData});

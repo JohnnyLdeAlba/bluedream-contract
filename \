@@ -43,7 +43,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   }
 
   t_token[] tokens;
-  mapping(address => uint256[]) tokenOwners;
+  mapping(address => uint256[]) tokensOfOwners;
 
   modifier haltOnMode(uint256 _mode) {
 
@@ -67,64 +67,26 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
         "FUNCTION_DISABLED_BY_MODE_", Strings.toHexString(mode))));
   }
 
-  // Token Querying functions.
-
-  function getToken(uint256 id)
-    public view returns (t_token memory) {
-      return tokens[id];
+  function _setMintPrice(uint256 price)
+    private {
+    mintPrice = (WEI_TO_ETH * price)/1000;
   }
 
-  function getAllTokens(uint256 startIndex, uint256 total)
-    public view returns(t_token[] memory) {
-
-      if (startIndex < 0 || startIndex > tokens.length - 1)
-        revert("START_INDEX_OUT_OF_RANGE");
-
-      else if (total < 0 || total > tokens.length)
-        revert("TOTAL_OUT_OF_RANGE");
-
-      if (total == 0)
-        total = tokens.length;
-
-      t_token[] memory tokensList;
-
-      for (uint index = 0; index < total; index++)
-        tokensList[index] = tokens[startIndex + index];
-
-	return tokensList;
+  function _setListingPrice(uint256 price)
+    private {
+    listingPrice = (WEI_TO_ETH * price)/1000;
   }
 
-  function getTokensOfOwner(address owner, uint startIndex, uint total)
+  function _setRoyalty(uint256 percentage)
+    private {
 
-    public view
-    returns(t_token[] memory) {
+    if (percentage < 0 || percentage > 100)
+      revert("ROYALTY_OUT_OF_RANGE");
 
-    if (tokenOwners[owner].length == 0)
-      revert("TOKEN_OWNER_DOESNT_EXIST");
-
-    if (startIndex < 0 || startIndex > tokenOwners[owner].length - 1)
-      revert("START_INDEX_OUT_OF_RANGE");
-    else if (total < 0 || total > tokenOwners[owner].length)
-      revert("TOTAL_OUT_OF_RANGE");
-
-    if (total == 0)
-      total = tokenOwners[owner].length;
-
-    t_token[] memory tokensList;
-    uint tokenId = 0;
-
-    for (uint index = 0; index < total; index++) {
-
-      tokenId = tokenOwners[owner][index];
-      tokensList[index] = tokens[tokenId];
-    }
-
-    return tokensList;
+    royalty = percentage;
   }
 
-  // Minting functions
-
-  function _rand() private returns (bytes32) {
+  function rand() private view returns (bytes32) {
 
     return keccak256(
       abi.encodePacked(
@@ -156,13 +118,34 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     unchecked {
 
       _safeMint(msg.sender, 1);
-
-      tokens[tokenId] = t_token(name, _rand(), _rand(), false, 0, msg.sender);
-      tokenOwners[msg.sender].push(tokenId);
+      tokens[tokenId] = t_token(name, rand(), rand(), false, 0);
     }
   }
 
-  // Marketplace functions.
+  function getToken(uint256 id)
+    public view returns (t_token memory) {
+      return tokens[id];
+  }
+
+  function getAllTokens(uint256 startIndex, uint256 total)
+    public view returns(t_token[] memory) {
+
+      if (startIndex < 0 || startIndex > tokens.length - 1)
+        revert("START_INDEX_OUT_OF_RANGE");
+
+      else if (total < 0 || total > tokens.length)
+        revert("TOTAL_OUT_OF_RANGE");
+
+      if (total == 0)
+        total = tokens.length;
+
+      t_token[] memory tokensList;
+
+      for (uint index = 0; index < total; index++)
+        tokensList[index] = tokens[startIndex + index];
+
+	return tokensList;
+  }
 
   function _list(uint256 tokenId, uint price)
     private {
@@ -171,17 +154,6 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
     token.listed = false;
     token.price = price;
-  }
-
-  function _swapTokenOwner(address from, address to, uint tokenId)
-    private {
-
-    tokens[tokenId].owner = to;
-
-    tokenOwners[from][tokenId] = tokenOwners[from][tokenOwners[from].length - 1];
-    tokenOwners[from].pop();
-
-    tokenOwners[to].push(tokenId);
   }
 
   function listToken(uint256 tokenId, uint256 price)
@@ -225,8 +197,6 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
     address ownerAddress = ownerOf(tokenId);
     safeTransferFrom(ownerAddress, msg.sender, tokenId);
-    
-    _swapTokenOwner(ownerAddress, msg.sender, tokenId); 
 
     uint256 priceDifference = msg.value - token.price;
     uint256 adjustedPrice = msg.value - priceDifference;
@@ -251,51 +221,9 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
     super.transferFrom(from, to, tokenId);
 
-    _swapTokenOwner(from, to, tokenId); 
-
     // Unlist the token on transfer. This is to prevent users from exploting the built in marketplace
     // into stealing items sold on other marketplaces like OpenSea.
-
     _list(tokenId, 0);
-  }
-
-  // Administrative functions.
-
-  function _setMintPrice(uint256 price)
-    private {
-    mintPrice = (WEI_TO_ETH * price)/1000;
-  }
-
-  function _setListingPrice(uint256 price)
-    private {
-    listingPrice = (WEI_TO_ETH * price)/1000;
-  }
-
-  function _setRoyalty(uint256 percentage)
-    private {
-
-    if (percentage < 0 || percentage > 100)
-      revert("ROYALTY_OUT_OF_RANGE");
-
-    royalty = percentage;
-  }
-
-  function setMintPrice(uint256 price)
-    external
-    onlyOwner {
-    _setMintPrice(price);
-  }
-
-  function setListingPrice(uint256 price)
-    external
-    onlyOwner {
-    _setListingPrice(price);
-  }
-
-  function setRoyalty(uint256 percentage)
-    external
-   onlyOwner {
-    _setRoyalty(percentage);
   }
 
   function withdrawVault()
