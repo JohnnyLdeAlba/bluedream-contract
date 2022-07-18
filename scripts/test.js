@@ -4,7 +4,9 @@ async function main() {
 
   const [ deployer, account1 ] = await ethers.getSigners();
 
-  let contract = new ethers.Contract("0xab8aC5F2c109049a38CE9c8351F3AbA7b91925e3", contractABI, deployer);
+  let contract = new ethers.Contract("0x53d4b43B7d7Fb04BB713c8DeE49B3BA86eE5DE04", contractABI, deployer);
+
+  contract.on("Log", (tokenId) => { console.log("tokenId: " + tokenId); });
 
   let message = await deployer.getBalance();
   console.log("Account balance before: " + message);

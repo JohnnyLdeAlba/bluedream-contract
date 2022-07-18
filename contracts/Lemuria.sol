@@ -159,6 +159,8 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
       );
   }
 
+  event Log(uint tokenId);
+
   function mint(bytes32 providedKey, string calldata name)
     external
     haltOnMode(MODE1_MINT_PAUSED)
@@ -167,6 +169,8 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
      _validAccessKey(MINT_ACCESS, providedKey);
 
     uint256 tokenId = _nextTokenId();
+
+    emit Log(tokenId);
 
     if (msg.value < mintPrice)
       revert("NOT_ENOUGH_ETH");

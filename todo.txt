@@ -11,8 +11,28 @@ What needs to be set after the contract is deployed.
 - MARKETPLACE_ACCESS
 - ACHIEVEMENTS_ACCESS
 
+Todo list:
+
+[ ] Double check ERCA721A contract for anything that could break the marketplace, i.e. other types of transfers.
+
 Tested Checklist:
 
-[ ] minting
-[ ] getToken
-[ ] getAllTokens 
+[-] mint 
+[-] getToken
+[-] getAllTokens 
+
+Tests Performed:
+
+- Boundary
+- Monetary
+- Transfer
+- Secuity
+
+Keys:
+
+- Working.
+* Boundary check performed.
+$ Monetary check performed.
+> Transfer check performed.
+! Security check performed.
+X All tests complete.
