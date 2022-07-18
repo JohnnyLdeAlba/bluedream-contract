@@ -19,7 +19,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   uint256 private constant MODE1_MINT_PAUSED = 1 << 1;
   uint256 private constant MODE2_NAMECHANGE_PAUSED = 1 << 2;
   uint256 private constant MODE3_MARKETPLACE_PAUSED = 1 << 3;
-  uint256 private constant MODE3_ACHIEVMENTS_PAUSED = 1 << 4;
+  uint256 private constant MODE4_ACHIEVEMENTS_PAUSED = 1 << 4;
   uint256 private constant MODE5_TRANSFERS_PAUSED = 1 << 5;
   uint256 private constant MODE6_TREASURY_PAUSED = 1 << 6;
   uint256 private constant MODE7_CONTRACT_PAUSED = 0xff;
@@ -33,7 +33,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   uint256 private constant WEI_TO_ETH = 1000000000000000000;
 
   uint256 private mode;
-  bytes32 private accessKey;
+  bytes32[] private accessKey;
 
   uint256 private mintPrice;
   uint256 private listingPrice;
@@ -57,7 +57,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   t_token[] tokens;
   mapping(address => uint256[]) tokenOwners;
 
-  modifier haltOnMode(uint32 _mode) {
+  modifier haltOnMode(uint256 _mode) {
 
     _checkMode(_mode);
     _;
@@ -69,10 +69,10 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     mode = MODE0_CONTRACT_UNPAUSED;
     // MODE1_MINT_PAUSED | MODE3_ACHIEVMENTS_PAUSED | MODE6_TREASURY_PAUSED - Treasury and achievements should always be paused for security reasons.
 
-    _setMintPrice(100);
-    _setListingPrice(5);
-    _setNameChangePrice(50);
-    _setRoyalty(8);  
+    mintPrice = _ETHToWEIConvert(100);
+    listingPrice = _ETHToWEIConvert(50);
+    nameChangePrice = _ETHToWEIConvert(8);
+    royalty = 8;  
   }
 
   function _checkMode(uint256 _mode)
@@ -91,11 +91,6 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   }
 
   // Token Querying functions.
-
-  function _startTokenId()
-  internal view virtual
-  returns (uint256) {
-    return 1; }		    
 
   function getToken(uint256 id)
     public view returns (t_token memory) {
@@ -190,13 +185,14 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
       tokens[tokenId] = t_token(
         true,
-	name,
 	tokenId,
+	name,
 	_rand(),
 	_rand(),
 	false,
 	0,
-	msg.sender);
+	msg.sender,
+        0);
 
       tokenOwners[msg.sender].push(tokenId);
     }
@@ -226,10 +222,10 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     tokenOwners[to].push(tokenId);
   }
 
-  function _isSenderTokenOwner(tokenId)
+  function _isSenderTokenOwner(uint256 tokenId)
     private {
 
-     if (tokens[tokenId].initialized == false)
+    if (tokens[tokenId].initialized == false)
       revert("TOKEN_DOES_NOT_EXIST");
 
     address ownerAddress = ownerOf(tokenId);
@@ -251,7 +247,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   function changeName(
     bytes32 providedKey,
     uint256 tokenId,
-    string name)
+    string memory name)
 
     external nonReentrant
     haltOnMode(MODE2_NAMECHANGE_PAUSED)
@@ -260,17 +256,20 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     _validAccessKey(MARKETPLACE_ACCESS, providedKey);
     _isSenderTokenOwner(tokenId);
 
-    if (msg.value < changeNamePrice)
+    if (msg.value < nameChangePrice)
       revert("CHANGE_NAME_PAYMENT_TOO_LOW");
 
     if (bytes(name).length >= 32)
       revert("NAME_TOO_LONG");
 
     tokens[tokenId].name = name;
-    _refundPriceDifference(changeNamePrice);
+    _refundPriceDifference(nameChangePrice);
   }
 
-  function setTokenAchievements(bytes32 providedKey, uint256 achievements)
+  function setTokenAchievements(
+    bytes32 providedKey,
+    uint256 tokenId,
+    uint256 achievements)
     external
     nonReentrant
 
@@ -282,8 +281,8 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     if (msg.value < achievementsPrice)
       revert("ACHIEVEMENTS_PAYMENT_TOO_LOW");
 	
-    _setTokenAchievements(achievements);
-    _refundPriceDifference(ahievementsPrice);
+    tokens[tokenId].achievements = achievements;
+    _refundPriceDifference(achievementsPrice);
   }
 
   function listToken(bytes32 providedKey, uint256 tokenId, uint256 price)
@@ -295,7 +294,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     _validAccessKey(MARKETPLACE_ACCESS, providedKey);
     _isSenderTokenOwner(tokenId);
 
-    if (msg.value < changeNamePrice)
+    if (msg.value < nameChangePrice)
       revert("LISTING_PAYMENT_TOO_LOW");
 
     _list(tokenId, price);
@@ -324,7 +323,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     
     _swapTokenOwner(ownerAddress, msg.sender, tokenId); 
 
-    uint256 priceDifference = msg.value - token.price;
+    uint256 priceDifference = msg.value - tokens[tokenId].price;
     uint256 adjustedPrice = msg.value - priceDifference;
 
     uint256 royaltyCut = adjustedPrice * royalty / 100;
@@ -357,7 +356,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   // Administrative functions.
 
   function _ETHToWEIConvert(uint256 price)
-    private {
+    private returns (uint256) {
       return (WEI_TO_ETH * price)/1000;
   }
 
@@ -372,7 +371,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
   function _setTokenAchievements(uint256 tokenId, uint256 achievements)
     private {
-      tokens[tokenId].achievments = achievments;
+      tokens[tokenId].achievements = achievements;
   }
 
   function setMintPrice(uint256 price)
@@ -445,9 +444,11 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
       return address(this).balance;
   }
 
-  function setContractMode(uint256 _mode)
+  function setContractMode(bytes32 providedKey, uint256 _mode)
     external 
     onlyOwner {
+
+      _validAccessKey(ADMIN_ACCESS, providedKey);
       mode = _mode;
   }
 
@@ -459,7 +460,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
       return mode;
   }
 
- function giveKeysTo(address newOwner)
+ function giveKeysTo(bytes32 providedKey, address newOwner)
    external
    onlyOwner {
 
@@ -469,7 +470,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
    _transferOwnership(newOwner);
  }
 
- function throwAwayTheKeys()
+ function throwAwayTheKeys(bytes32 providedKey)
    public virtual
    onlyOwner {
 
@@ -477,11 +478,17 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     _transferOwnership(address(0));
  }
 
+ // Overrides
+
+ function _startTokenId()
+   internal view virtual override
+   returns (uint256) {return 1;}		    
+
  function renounceOwnership()
-   public virtual
+   public virtual override
    onlyOwner {}
 
  function transferOwnership(address newOwner)
-   public virtual
+   public virtual override
    onlyOwner {}
 }
