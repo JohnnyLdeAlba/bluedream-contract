@@ -8,9 +8,6 @@ import "erc721a/contracts/ERC721A.sol";
 /// @title Lemuria NFTs
 /// @author Mode7.Eth (https://twitter.com/mode7eth)
 
-// set name
-// set key for marketplace, mint
-
 contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
   using Strings for uint256;
@@ -41,6 +38,9 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   uint256 private achievementsPrice;
   uint256 private royalty;
 
+  string private _contractURI;
+  string private _tokenURI;
+
   struct t_token {
 
     bool initialized;
@@ -67,31 +67,21 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   constructor()
     ERC721A("Blue Dream", "MU") {
    
-    mode = MODE0_CONTRACT_UNPAUSED;
-    // MODE1_MINT_PAUSED | MODE3_ACHIEVMENTS_PAUSED | MODE6_TREASURY_PAUSED - Treasury and achievements should always be paused for security reasons.
+    mode = MODE0_CONTRACT_UNPAUSED; // MODE1_MINT_PAUSED | MODE3_ACHIEVMENTS_PAUSED | MODE6_TREASURY_PAUSED
+    // By default mint, achievements, and treasury should be paused for security reasons.
 
-    mintPrice = _miliETHToWEIConvert(100);
-    listingPrice = _miliETHToWEIConvert(50);
-    nameChangePrice = _miliETHToWEIConvert(8);
+    mintPrice = _miliETHToWEIConvert(80);
+    listingPrice = _miliETHToWEIConvert(8);
+    nameChangePrice = _miliETHToWEIConvert(40);
     royalty = 8;  
   }
 
-  function _checkMode(uint256 _mode)
-    private view {
-
-    if ((mode & _mode) == _mode)
-      revert(string(abi.encodePacked(
-        "FUNCTION_DISABLED_BY_MODE_", Strings.toHexString(mode))));
+  function _miliETHToWEIConvert(uint256 price)
+    private pure returns (uint256) {
+      return (WEI_TO_ETH * price)/1000;
   }
 
-  function _validAccessKey(uint256 access, bytes32 providedKey)
-    private view {
-
-      if (accessKey[access] != providedKey)
-        revert("ACCESSKEY_INVALID");
-  }
-
-  // Token Querying functions.
+  /* Token Querying Functions */
 
   function getToken(uint256 id)
     public view
@@ -148,7 +138,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     return tokensList;
   }
 
-  // Minting functions
+  /* Minting Functions */
 
   function _rand()
     private view
@@ -204,7 +194,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     _refundPriceDifference(mintPrice);
   }
 
-  // Marketplace functions.
+  /* Marketplace Functions */
 
   function _list(uint256 tokenId, uint price)
     private {
@@ -213,17 +203,6 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
     token.listed = false;
     token.price = price;
-  }
-
-  function _swapTokenOwner(address from, address to, uint tokenId)
-    private {
-
-    tokens[tokenId].owner = to;
-
-    tokenOwners[from][tokenId] = tokenOwners[from][tokenOwners[from].length - 1];
-    tokenOwners[from].pop();
-
-    tokenOwners[to].push(tokenId);
   }
 
   function _isSenderTokenOwner(uint256 tokenId)
@@ -236,6 +215,17 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
     if (msg.sender != ownerAddress)
       revert("SENDER_NOT_TOKEN_OWNER");   
+  }
+
+  function _swapTokenOwner(address from, address to, uint tokenId)
+    private {
+
+    tokens[tokenId].owner = to;
+
+    tokenOwners[from][tokenId] = tokenOwners[from][tokenOwners[from].length - 1];
+    tokenOwners[from].pop();
+
+    tokenOwners[to].push(tokenId);
   }
 
   function _refundPriceDifference(uint price)
@@ -274,17 +264,16 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     uint256 achievements)
     external
     nonReentrant
-
     haltOnMode(MODE4_ACHIEVEMENTS_PAUSED)
     payable {
 
-    _validAccessKey(ACHIEVEMENTS_ACCESS, providedKey);
+      _validAccessKey(ACHIEVEMENTS_ACCESS, providedKey);
 
-    if (msg.value < achievementsPrice)
-      revert("ACHIEVEMENTS_PAYMENT_TOO_LOW");
+      if (msg.value < achievementsPrice)
+        revert("ACHIEVEMENTS_PAYMENT_TOO_LOW");
 	
-    tokens[tokenId].achievements = achievements;
-    _refundPriceDifference(achievementsPrice);
+      tokens[tokenId].achievements = achievements;
+      _refundPriceDifference(achievementsPrice);
   }
 
   function listToken(bytes32 providedKey, uint256 tokenId, uint256 price)
@@ -337,30 +326,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     require(success, "BUY_TRANSFER_FAILED");
   }
 
-  function transferFrom(
-    address from,
-    address to,
-    uint256 tokenId
-  ) public virtual override
-
-    haltOnMode(MODE5_TRANSFERS_PAUSED)
-    onlyOwner {
-
-    super.transferFrom(from, to, tokenId);
-    _swapTokenOwner(from, to, tokenId); 
-
-    // Unlist the token on transfer. This is to prevent users from exploting the built in marketplace
-    // into stealing items sold on other marketplaces like OpenSea.
-
-    _list(tokenId, 0);
-  }
-
-  // Administrative functions.
-
-  function _miliETHToWEIConvert(uint256 price)
-    private pure returns (uint256) {
-      return (WEI_TO_ETH * price)/1000;
-  }
+  /* Administrative Functions */
 
   function _setRoyalty(uint256 percentage)
     private {
@@ -406,6 +372,39 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
       _setRoyalty(percentage);
   }
 
+  function _checkMode(uint256 _mode)
+    private view {
+
+    if ((mode & _mode) == _mode)
+      revert(string(abi.encodePacked(
+        "FUNCTION_DISABLED_BY_MODE_", Strings.toHexString(mode))));
+  }
+
+  function _validAccessKey(uint256 access, bytes32 providedKey)
+    private view {
+
+      if (accessKey[access] != providedKey)
+        revert("ACCESSKEY_INVALID");
+  }
+
+
+  function contractURI()
+    public view
+    returns (string memory) {
+      return _contractURI;
+  }
+
+
+  function setContractURI(string memory URI)
+    external {
+      _contractURI = URI;
+  }
+
+  function setTokenURI(string memory URI)
+    external {
+      _tokenURI = URI;
+  }
+
   function setAccessKey(
     bytes32 providedKey,
     uint256 access,
@@ -425,6 +424,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
       accessKey[access] = key;
   }
+
 
   function withdrawVault(bytes32 providedKey)
     external nonReentrant
@@ -480,11 +480,35 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     _transferOwnership(address(0));
  }
 
- // Overrides
+ /* Function Overrides */
 
  function _startTokenId()
    internal view virtual override
    returns (uint256) {return 1;}		    
+
+  function _baseURI()
+    internal view virtual override
+    returns (string memory) {
+      return _tokenURI;
+  }
+
+  function transferFrom(
+    address from,
+    address to,
+    uint256 tokenId
+  ) public virtual override
+
+    haltOnMode(MODE5_TRANSFERS_PAUSED)
+    onlyOwner {
+
+      super.transferFrom(from, to, tokenId);
+      _swapTokenOwner(from, to, tokenId); 
+
+      // Unlist the token on transfer. This is to prevent users from exploting the built in marketplace
+      // into stealing items sold on other marketplaces like OpenSea.
+
+      _list(tokenId, 0);
+  }
 
  function renounceOwnership()
    public virtual override
