@@ -57,6 +57,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   t_token[] tokens;
   mapping(address => uint256[]) tokenOwners;
 
+
   modifier haltOnMode(uint256 _mode) {
 
     _checkMode(_mode);
@@ -69,14 +70,14 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     mode = MODE0_CONTRACT_UNPAUSED;
     // MODE1_MINT_PAUSED | MODE3_ACHIEVMENTS_PAUSED | MODE6_TREASURY_PAUSED - Treasury and achievements should always be paused for security reasons.
 
-    mintPrice = _ETHToWEIConvert(100);
-    listingPrice = _ETHToWEIConvert(50);
-    nameChangePrice = _ETHToWEIConvert(8);
+    mintPrice = _miliETHToWEIConvert(100);
+    listingPrice = _miliETHToWEIConvert(50);
+    nameChangePrice = _miliETHToWEIConvert(8);
     royalty = 8;  
   }
 
   function _checkMode(uint256 _mode)
-    private {
+    private view {
 
     if ((mode & _mode) == _mode)
       revert(string(abi.encodePacked(
@@ -84,7 +85,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   }
 
   function _validAccessKey(uint256 access, bytes32 providedKey)
-    private {
+    private view {
 
       if (accessKey[access] != providedKey)
         revert("ACCESSKEY_INVALID");
@@ -93,7 +94,8 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   // Token Querying functions.
 
   function getToken(uint256 id)
-    public view returns (t_token memory) {
+    public view
+    returns (t_token memory) {
       return tokens[id];
   }
 
@@ -148,17 +150,19 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
   // Minting functions
 
-  function _rand() private returns (bytes32) {
+  function _rand()
+    private view
+    returns (bytes32) {
 
-    return keccak256(
-      abi.encodePacked(
-        block.timestamp,
-	block.number,
-        block.timestamp ^ block.number % 128,
-        block.timestamp | block.number % 256,
-        msg.sender
-      )
-    );
+      return keccak256(
+        abi.encodePacked(
+          block.timestamp,
+	  block.number,
+          block.timestamp ^ block.number % 128,
+          block.timestamp | block.number % 256,
+          msg.sender
+        )
+      );
   }
 
   function mint(bytes32 providedKey, string calldata name)
@@ -223,7 +227,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   }
 
   function _isSenderTokenOwner(uint256 tokenId)
-    private {
+    private view {
 
     if (tokens[tokenId].initialized == false)
       revert("TOKEN_DOES_NOT_EXIST");
@@ -238,8 +242,6 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     private {
 
     uint256 priceDifference = msg.value - price;
-    uint256 adjustedPrice = msg.value - priceDifference;
-
     if (priceDifference > 0)
       msg.sender.call{value: priceDifference}("");
   }
@@ -355,8 +357,8 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
   // Administrative functions.
 
-  function _ETHToWEIConvert(uint256 price)
-    private returns (uint256) {
+  function _miliETHToWEIConvert(uint256 price)
+    private pure returns (uint256) {
       return (WEI_TO_ETH * price)/1000;
   }
 
@@ -377,25 +379,25 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   function setMintPrice(uint256 price)
     external
     onlyOwner {
-      mintPrice = _ETHToWEIConvert(price);
+      mintPrice = _miliETHToWEIConvert(price);
   }
 
   function setNameChangePrice(uint256 price)
     external
     onlyOwner {
-      nameChangePrice = _ETHToWEIConvert(price);
+      nameChangePrice = _miliETHToWEIConvert(price);
   }
 
   function setListingPrice(uint256 price)
     external
     onlyOwner {
-      listingPrice = _ETHToWEIConvert(price);
+      listingPrice = _miliETHToWEIConvert(price);
   }
 
   function setAchievementsPrice(uint256 price)
     external
     onlyOwner {
-      achievementsPrice = _ETHToWEIConvert(price);
+      achievementsPrice = _miliETHToWEIConvert(price);
   }
 
   function setRoyalty(uint256 percentage)
