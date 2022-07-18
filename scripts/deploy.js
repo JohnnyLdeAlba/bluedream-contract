@@ -1,4 +1,4 @@
-const contractAbi = require('../Lemuria.abi.json');
+const contractAbi = require('../BlueDream.abi.json');
 
 async function main() {
 

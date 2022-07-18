@@ -30,7 +30,6 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   uint256 private constant WEI_TO_ETH = 1000000000000000000;
 
   uint256 private mode;
-  bytes32[] private accessKey;
 
   uint256 private mintPrice;
   uint256 private listingPrice;
@@ -54,9 +53,9 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     uint256 achievements;
   }
 
-  t_token[] tokens;
+  mapping(uint256 => t_token) tokens;
   mapping(address => uint256[]) tokenOwners;
-
+  mapping(uint256 => bytes32) accessKey;
 
   modifier haltOnMode(uint256 _mode) {
 
@@ -69,6 +68,8 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
    
     mode = MODE0_CONTRACT_UNPAUSED; // MODE1_MINT_PAUSED | MODE3_ACHIEVMENTS_PAUSED | MODE6_TREASURY_PAUSED
     // By default mint, achievements, and treasury should be paused for security reasons.
+
+    accessKey[MINT_ACCESS] = keccak256("ECCO");
 
     mintPrice = _miliETHToWEIConvert(80);
     listingPrice = _miliETHToWEIConvert(8);
@@ -83,29 +84,32 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
   /* Token Querying Functions */
 
-  function getToken(uint256 id)
+  function getToken(uint256 tokenId)
     public view
     returns (t_token memory) {
-      return tokens[id];
+      return tokens[tokenId];
   }
 
   function getAllTokens(uint256 startIndex, uint256 total)
     public view
     returns(t_token[] memory) {
 
-      if (startIndex < 0 || startIndex > tokens.length - 1)
+      if (startIndex < 0 || startIndex > totalSupply())
         revert("START_INDEX_OUT_OF_RANGE");
 
-      else if (total < 0 || total > tokens.length)
+      else if (total < 0 || total > totalSupply())
         revert("TOTAL_OUT_OF_RANGE");
 
       if (total == 0)
-        total = tokens.length;
+        total = totalSupply() + 1;
 
-      t_token[] memory tokensList;
+      t_token[] memory tokensList = new t_token[](total);
 
-      for (uint256 index = 0; index < total; index++)
-        tokensList[index] = tokens[startIndex + index];
+      for (uint256 index = 0; index < total; index++) {
+
+	t_token storage token = tokens[startIndex + index];
+        tokensList[index] = token;
+      }
 
       return tokensList;
   }
@@ -160,7 +164,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     haltOnMode(MODE1_MINT_PAUSED)
     payable {
 
-    _validAccessKey(MINT_ACCESS, providedKey);
+     _validAccessKey(MINT_ACCESS, providedKey);
 
     uint256 tokenId = _nextTokenId();
 
@@ -170,26 +174,23 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     if (bytes(name).length >= 32)
       revert("NAME_TOO_LONG");
 
-    if (totalSupply() >= MAX_SUPPLY)
+    if (totalSupply() > MAX_SUPPLY)
       revert("MINTED_OUT");
 
-    unchecked {
+    _safeMint(msg.sender, 1);
 
-      _safeMint(msg.sender, 1);
-
-      tokens[tokenId] = t_token(
-        true,
-	tokenId,
-	name,
-	_rand(),
-	_rand(),
-	false,
-	0,
-	msg.sender,
-        0);
-
-      tokenOwners[msg.sender].push(tokenId);
-    }
+    tokens[tokenId] = t_token(
+      true,
+      tokenId,
+      name,
+      _rand(),
+      _rand(),
+      false,
+      0,
+      msg.sender,
+      0);
+      
+    tokenOwners[msg.sender].push(tokenId);
 
     _refundPriceDifference(mintPrice);
   }

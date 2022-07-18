@@ -1,0 +1,18 @@
+What needs to be set before the contract is deployed.
+
+- mode = MODE1_MINT_PAUSED | MODE3_ACHIEVMENTS_PAUSED | MODE6_TREASURY_PAUSED
+- contractURI
+- tokenURI
+ 
+What needs to be set after the contract is deployed.
+
+- !ADMIN_ACCESS
+- MINT_ACCESS
+- MARKETPLACE_ACCESS
+- ACHIEVEMENTS_ACCESS
+
+Tested Checklist:
+
+[ ] minting
+[ ] getToken
+[ ] getAllTokens 
