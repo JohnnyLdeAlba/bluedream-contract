@@ -161,7 +161,13 @@
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "tokenId",
+          "name": "index",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "total",
           "type": "uint256"
         }
       ],

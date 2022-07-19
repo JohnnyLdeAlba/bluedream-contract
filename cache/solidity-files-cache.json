@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/var/www/bluedream-contract/contracts/Lemuria.sol": {
-      "lastModificationDate": 1658187129441,
-      "contentHash": "519e282d12f22d929988482e15a49716",
+      "lastModificationDate": 1658201710968,
+      "contentHash": "a7d429afd25da24d30d2754cb2798fdc",
       "sourceName": "contracts/Lemuria.sol",
       "solcConfig": {
         "version": "0.8.9",

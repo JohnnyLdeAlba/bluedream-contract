@@ -17,9 +17,10 @@ Todo list:
 
 Tested Checklist:
 
+[-!] getToken
+[-!] getAllTokens! 
+[-!] getTokensOfOwner!
 [-] mint 
-[-] getToken
-[-] getAllTokens 
 
 Tests Performed:
 
