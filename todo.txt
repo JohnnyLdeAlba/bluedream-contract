@@ -14,13 +14,21 @@ What needs to be set after the contract is deployed.
 Todo list:
 
 [ ] Double check ERCA721A contract for anything that could break the marketplace, i.e. other types of transfers.
+[ ] Make sure to implement other interfaces for tokenURI contractURI, otherwise they'll be no way to access.
 
 Tested Checklist:
 
 [-!] getToken
 [-!] getAllTokens! 
 [-!] getTokensOfOwner!
-[-] mint 
+[-] mint
+ - _refundPriceDifference appears to be working.  
+ - Max supply works.
+[-] listToken
+[-] delistToken
+[-] buyToken
+ - Need to double check if listed before buying.
+[-] safeTransfer
 
 Tests Performed:
 

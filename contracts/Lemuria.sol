@@ -3,10 +3,12 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import "erc721a/contracts/ERC721A.sol";
+import "./ERC721A.sol";
 
 /// @title Lemuria NFTs
 /// @author Mode7.Eth (https://twitter.com/mode7eth)
+
+// Intercept approval and setApprovalForAll to shutdown transfers.
 
 contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
@@ -71,6 +73,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     // By default mint, achievements, and treasury should be paused for security reasons.
 
     accessKey[MINT_ACCESS] = keccak256("ECCO");
+    accessKey[MARKETPLACE_ACCESS] = keccak256("ECCO");
 
     mintPrice = _miliETHToWEIConvert(80);
     listingPrice = _miliETHToWEIConvert(8);
@@ -121,9 +124,6 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
       return tokensList;
   }
-
-  // Remove
-  event Log(uint256 index, uint256 total);
 
   function getTokensOfOwner(address owner, uint startIndex, uint total)
 
@@ -180,11 +180,15 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     uint256 tokenId = _nextTokenId();
 
     // Check what amount exactly is being taken.
+
     if (msg.value < mintPrice)
       revert("NOT_ENOUGH_ETH");
 
     // Test to see what the true maxmimum is.
-    if (totalSupply() > MAX_SUPPLY)
+
+    // Total supply needs to be adjusted if max is 4 five are made which is correct
+    // but not the number were looking for.
+    if (totalSupply() >= 100000)
       revert("MINTED_OUT");
 
     _safeMint(msg.sender, 1);
@@ -202,18 +206,17 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     
     tokenOwners[msg.sender].push(tokenId);
 
-    // See if this actually works.
     _refundPriceDifference(mintPrice);
   }
 
   /* Marketplace Functions */
 
-  function _list(uint256 tokenId, uint price)
+  function _list(uint256 tokenId, uint price, bool listed)
     private {
 
     t_token storage token = tokens[tokenId];
 
-    token.listed = false;
+    token.listed = listed;
     token.price = price;
   }
 
@@ -240,12 +243,16 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     tokenOwners[to].push(tokenId);
   }
 
+  event Logging(uint256 _before, uint256 _after, uint256 _result);
+
   function _refundPriceDifference(uint price)
     private {
 
     uint256 priceDifference = msg.value - price;
     if (priceDifference > 0)
       msg.sender.call{value: priceDifference}("");
+    // Should emit an event?
+
   }
 
   function changeName(
@@ -300,16 +307,17 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     if (msg.value < nameChangePrice)
       revert("LISTING_PAYMENT_TOO_LOW");
 
-    _list(tokenId, price);
+    _list(tokenId, price, true);
     _refundPriceDifference(listingPrice);
   }
 
+  // Needs security inserted!!!!!
   function delistToken(uint256 tokenId)
     external nonReentrant
     haltOnMode(MODE3_MARKETPLACE_PAUSED) {
 
      _isSenderTokenOwner(tokenId);
-    _list(tokenId, 0);
+    _list(tokenId, 1234567890, false);
   }
 
   function buyToken(bytes32 providedKey, uint256 tokenId)
@@ -319,11 +327,17 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     payable {
 
     _validAccessKey(MARKETPLACE_ACCESS, providedKey);
-    _isSenderTokenOwner(tokenId);
+
+    // double check security here...
+    // _isSenderTokenOwner(tokenId);
 
     address ownerAddress = ownerOf(tokenId);
+
+    _approve(msg.sender, tokenId);
     safeTransferFrom(ownerAddress, msg.sender, tokenId);
-    
+
+    return;
+
     _swapTokenOwner(ownerAddress, msg.sender, tokenId); 
 
     uint256 priceDifference = msg.value - tokens[tokenId].price;
@@ -407,12 +421,14 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
 
   function setContractURI(string memory URI)
-    external {
+    external
+    onlyOwner {
       _contractURI = URI;
   }
 
   function setTokenURI(string memory URI)
-    external {
+    external
+    onlyOwner {
       _tokenURI = URI;
   }
 
@@ -509,8 +525,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     uint256 tokenId
   ) public virtual override
 
-    haltOnMode(MODE5_TRANSFERS_PAUSED)
-    onlyOwner {
+    haltOnMode(MODE5_TRANSFERS_PAUSED) {
 
       super.transferFrom(from, to, tokenId);
       _swapTokenOwner(from, to, tokenId); 
@@ -518,7 +533,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
       // Unlist the token on transfer. This is to prevent users from exploting the built in marketplace
       // into stealing items sold on other marketplaces like OpenSea.
 
-      _list(tokenId, 0);
+      _list(tokenId, 1234567890, false);
   }
 
  function renounceOwnership()
