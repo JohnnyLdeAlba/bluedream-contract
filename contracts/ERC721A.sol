@@ -423,7 +423,7 @@ contract ERC721A is IERC721A {
      * Emits an {Approval} event.
      */
 
-    function _approve(address to, uint256 tokenId) internal {
+    function _approve(address to, uint256 tokenId) internal virtual {
         address owner = ownerOf(tokenId);
         _tokenApprovals[tokenId].value = to;
         emit Approval(owner, to, tokenId);

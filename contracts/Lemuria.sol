@@ -188,7 +188,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
     // Total supply needs to be adjusted if max is 4 five are made which is correct
     // but not the number were looking for.
-    if (totalSupply() >= 100000)
+    if (totalSupply() >= MAX_SUPPLY)
       revert("MINTED_OUT");
 
     _safeMint(msg.sender, 1);
@@ -205,7 +205,6 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
       0);
     
     tokenOwners[msg.sender].push(tokenId);
-
     _refundPriceDifference(mintPrice);
   }
 
@@ -217,7 +216,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     t_token storage token = tokens[tokenId];
 
     token.listed = listed;
-    token.price = price;
+    token.price = _miliETHToWEIConvert(price);
   }
 
   function _isSenderTokenOwner(uint256 tokenId)
@@ -237,13 +236,14 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
     tokens[tokenId].owner = to;
 
-    tokenOwners[from][tokenId] = tokenOwners[from][tokenOwners[from].length - 1];
-    tokenOwners[from].pop();
+    if (from != address(0)) {
+
+      tokenOwners[from][tokenId] = tokenOwners[from][tokenOwners[from].length - 1];
+      tokenOwners[from].pop();
+    }
 
     tokenOwners[to].push(tokenId);
   }
-
-  event Logging(uint256 _before, uint256 _after, uint256 _result);
 
   function _refundPriceDifference(uint price)
     private {
@@ -304,7 +304,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     _validAccessKey(MARKETPLACE_ACCESS, providedKey);
     _isSenderTokenOwner(tokenId);
 
-    if (msg.value < nameChangePrice)
+    if (msg.value < listingPrice)
       revert("LISTING_PAYMENT_TOO_LOW");
 
     _list(tokenId, price, true);
@@ -316,9 +316,14 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     external nonReentrant
     haltOnMode(MODE3_MARKETPLACE_PAUSED) {
 
+    _validAccessKey(MARKETPLACE_ACCESS, providedKey);
+    _isSenderTokenOwner(tokenId);
+
      _isSenderTokenOwner(tokenId);
-    _list(tokenId, 1234567890, false);
+    _list(tokenId, 999999, false);
   }
+
+  event Logging(uint256 _before, uint256 _after, uint256 _result);
 
   function buyToken(bytes32 providedKey, uint256 tokenId)
     external nonReentrant
@@ -328,23 +333,31 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
     _validAccessKey(MARKETPLACE_ACCESS, providedKey);
 
-    // double check security here...
-    // _isSenderTokenOwner(tokenId);
+    if (tokens[tokenId].initialized == false)
+      revert("TOKEN_DOES_NOT_EXIST");
+
+    if (tokens[tokenId].listed == false)
+      revert("TOKEN_NOT_FOR_SALE");
+
+    if (msg.value < tokens[tokenId].price)
+      revert("BUY_PAYMENT_TOO_LOW");
+
+    // We need to get the token price before it is transfered.
+    // After it is transfered the token will get delisted and the price will be reset.
+    uint256 tokenPrice = tokens[tokenId].price;
 
     address ownerAddress = ownerOf(tokenId);
 
     _approve(msg.sender, tokenId);
     safeTransferFrom(ownerAddress, msg.sender, tokenId);
 
-    return;
-
-    _swapTokenOwner(ownerAddress, msg.sender, tokenId); 
-
-    uint256 priceDifference = msg.value - tokens[tokenId].price;
+    uint256 priceDifference = msg.value - tokenPrice;
     uint256 adjustedPrice = msg.value - priceDifference;
 
     uint256 royaltyCut = adjustedPrice * royalty / 100;
     uint256 finalPrice = adjustedPrice - royaltyCut;
+
+    emit Logging(priceDifference, royaltyCut, finalPrice);
 
     // Refund buyer if they overpaid.
     msg.sender.call{value: priceDifference}("");
@@ -519,28 +532,49 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
       return _tokenURI;
   }
 
-  function transferFrom(
-    address from,
-    address to,
-    uint256 tokenId
-  ) public virtual override
-
-    haltOnMode(MODE5_TRANSFERS_PAUSED) {
-
-      super.transferFrom(from, to, tokenId);
-      _swapTokenOwner(from, to, tokenId); 
-
-      // Unlist the token on transfer. This is to prevent users from exploting the built in marketplace
-      // into stealing items sold on other marketplaces like OpenSea.
-
-      _list(tokenId, 1234567890, false);
+  function setApprovalForAll(address operator, bool approved)
+    public virtual override
+    haltOnMode(MODE5_TRANSFERS_PAUSED) { 
+      super.setApprovalForAll(operator, approved);
   }
 
- function renounceOwnership()
-   public virtual override
-   onlyOwner {}
+  function _approve(address to, uint256 tokenId)
+    internal virtual override
+    haltOnMode(MODE5_TRANSFERS_PAUSED) {   
+      super._approve(to, tokenId);  
+  }
 
- function transferOwnership(address newOwner)
-   public virtual override
-   onlyOwner {}
+  function approve(address to, uint256 tokenId)
+    public virtual override
+    haltOnMode(MODE5_TRANSFERS_PAUSED) {   
+      super.approve(to, tokenId);  
+  }
+
+  function _beforeTokenTransfers(
+    address from,
+    address to,
+    uint256 startTokenId,
+    uint256 quantity
+  ) internal virtual override
+    haltOnMode(MODE5_TRANSFERS_PAUSED) {}
+
+  function _afterTokenTransfers(
+    address from,
+    address to,
+    uint256 startTokenId,
+    uint256 quantity
+  ) internal virtual override {
+
+       _swapTokenOwner(from, to, startTokenId); 
+      _list(startTokenId, 999999, false); 
+  }
+
+  // These need to be implemented.
+  function renounceOwnership()
+    public virtual override
+    onlyOwner {}
+
+  function transferOwnership(address newOwner)
+    public virtual override
+    onlyOwner {}
 }

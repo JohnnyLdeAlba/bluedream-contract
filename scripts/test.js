@@ -1,113 +1,95 @@
 const contractABI = require('../BlueDream.abi.json');
 
+async function mint(contract, deployer, quantity) {
+
+  let index;
+  for (index = 0; index < quantity; index++) {
+
+    await contract.connect(deployer).mint(
+      ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ECCO")),
+      "Namekian",
+      {value: ethers.utils.parseEther("0.1")}
+    );
+  }
+}
+
 async function main() {
 
   const [ deployer, account1 ] = await ethers.getSigners();
 
-  let contract = new ethers.Contract("0xDA0593875B3bcF10ca73304ca6486A0B6a44fbF4", contractABI, deployer);
-/*
+  const contract = new ethers.Contract("0xE74aF62886c92C0113Caf9B1E69C38Faa0a9D387", contractABI, deployer);
+
   contract.on("Logging", (_before, _after, _result) => {
+
     console.log(
       " before: " + ethers.utils.formatEther(_before) +
       " _after: " + ethers.utils.formatEther(_after) +
       " _result: " + ethers.utils.formatEther(_result)
     );
   });
-*/
-  contract.on("Approval", (owner, approved, tokenId) => {
-    console.log(
-      " before: " + ethers.utils.formatEther(owner) +
-      " _after: " + ethers.utils.formatEther(approved) +
-      " _result: " + ethers.utils.formatEther(tokenId)
-    );
-  });
 
-/*
   let before = await deployer.getBalance();
   console.log("Account balance before: " + before);
 
   let message = await contract.name();
   console.log("Returned: " + message);
-*/
 
-/*
-	let index = 0;
-  for (index = 0; index < 1; index++) {
+  // await mint(contract, deployer, 1);
 
-    await contract.connect(deployer).mint(
-      ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ECCO")),
-      "Eve",
-      {value: ethers.utils.parseEther("0." + (index + 1))}
-    );
-  }
-
-  let tokenId = 1;
-
+  let tokenId = 7;
 
   message = await contract.getToken(tokenId);
   console.log("Returned: " + message);
-*/
 
-let tokenId = 2;
+  if (false) {
 
+    try {
 
-if (false) {
+      await contract.connect(deployer).listToken(
+        ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ECCO")),
+        tokenId,
+        1000,
+        {value: ethers.utils.parseEther("2")}
+      );
+    }
+    catch (error) { console.log(error); };
 
-  await contract.connect(deployer).listToken(
-    ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ECCO")),
-    tokenId,
-    10,
-    {value: ethers.utils.parseEther("2")}
-  );
+    return;
+  }
 
-}
-
-
-/*
-  let address = await deployer.getAddress();
-  message = await contract.ownerOf(tokenId);
-  console.log("Returned: " + message);
-*/
-// double check for empty addresses.
-
-/*
-  await contract.connect(deployer).approve(
-    account1.getAddress(),
-    tokenId
-  );
-
-return;
-*/
-try {
-await contract.connect(account1).transferFrom(
-    deployer.getAddress(),
-    account1.getAddress(),
-    tokenId
-  );
-}
-catch (error) {
-  console.log(error);
-}
-
-/*
-  await contract.connect(account1).buyToken(
-    ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ECCO")),
-    tokenId,
-    {value: ethers.utils.parseEther("2")}
-  );
-*/
-  console.log("Here");
-
-  address = await deployer.getAddress();
-  message = await contract.ownerOf(tokenId);
+  message = await contract.getToken(tokenId);
   console.log("Returned: " + message);
 
-  return;
+/*
+  try {
+
+    await contract.connect(deployer).safeTransferFrom(
+      deployer.getAddress(),
+      account1.getAddress(),
+      tokenId
+    );
+  }
+  catch (error) { console.log(error); }
+*/
+
+  try {
+
+    await contract.connect(account1).buyToken(
+      ethers.utils.keccak256(ethers.utils.toUtf8Bytes("ECCO")),
+      tokenId,
+      {value: ethers.utils.parseEther("0.6")}
+    );
+  }
+  catch (error) { console.log(error); }
+
+  message = await contract.getToken(tokenId);
+  console.log("Returned: " + message);
 
   let after = await deployer.getBalance();
   console.log("Account balance after: " + after);
-  console.log("Difference after:: " + (before-after));
-  console.log("Difference after: " + ethers.utils.formatEther(before-after));
+  console.log("Difference after:: " + (before - after));
+  console.log("Difference after: " + ethers.utils.formatEther((before - after) + ""));
+  console.log("Difference after: " + ethers.utils.formatEther((after - before) + ""));
 }
 
 main()
