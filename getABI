@@ -1,1 +1,1 @@
-cp artifacts/contracts/Lemuria.sol/BlueDream.json BlueDream.abi.json
+cp artifacts/contracts/BlueDream.sol/BlueDream.json BlueDream.abi.json

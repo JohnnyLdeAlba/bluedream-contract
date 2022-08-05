@@ -1,6 +1,12 @@
   [
     {
-      "inputs": [],
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_controller",
+          "type": "address"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "constructor"
     },
@@ -159,31 +165,6 @@
       "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_before",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_after",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "_result",
-          "type": "uint256"
-        }
-      ],
-      "name": "Logging",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
           "indexed": true,
           "internalType": "address",
           "name": "previousOwner",
@@ -197,6 +178,19 @@
         }
       ],
       "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "Paused",
       "type": "event"
     },
     {
@@ -222,6 +216,31 @@
         }
       ],
       "name": "Transfer",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "Unpaused",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [],
+      "name": "mintOK",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [],
+      "name": "nameChangeOK",
       "type": "event"
     },
     {
@@ -264,29 +283,6 @@
     {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "providedKey",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
-      ],
-      "name": "buyToken",
-      "outputs": [],
-      "stateMutability": "payable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "providedKey",
-          "type": "bytes32"
-        },
-        {
           "internalType": "uint256",
           "name": "tokenId",
           "type": "uint256"
@@ -300,32 +296,6 @@
       "name": "changeName",
       "outputs": [],
       "stateMutability": "payable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "contractURI",
-      "outputs": [
-        {
-          "internalType": "string",
-          "name": "",
-          "type": "string"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
-      ],
-      "name": "delistToken",
-      "outputs": [],
-      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -345,11 +315,6 @@
       "outputs": [
         {
           "components": [
-            {
-              "internalType": "bool",
-              "name": "initialized",
-              "type": "bool"
-            },
             {
               "internalType": "uint256",
               "name": "id",
@@ -371,24 +336,9 @@
               "type": "bytes32"
             },
             {
-              "internalType": "bool",
-              "name": "listed",
-              "type": "bool"
-            },
-            {
-              "internalType": "uint256",
-              "name": "price",
-              "type": "uint256"
-            },
-            {
               "internalType": "address",
               "name": "owner",
               "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "achievements",
-              "type": "uint256"
             }
           ],
           "internalType": "struct BlueDream.t_token[]",
@@ -419,19 +369,6 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "getContractMode",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
           "internalType": "uint256",
@@ -443,11 +380,6 @@
       "outputs": [
         {
           "components": [
-            {
-              "internalType": "bool",
-              "name": "initialized",
-              "type": "bool"
-            },
             {
               "internalType": "uint256",
               "name": "id",
@@ -469,24 +401,9 @@
               "type": "bytes32"
             },
             {
-              "internalType": "bool",
-              "name": "listed",
-              "type": "bool"
-            },
-            {
-              "internalType": "uint256",
-              "name": "price",
-              "type": "uint256"
-            },
-            {
               "internalType": "address",
               "name": "owner",
               "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "achievements",
-              "type": "uint256"
             }
           ],
           "internalType": "struct BlueDream.t_token",
@@ -520,11 +437,6 @@
         {
           "components": [
             {
-              "internalType": "bool",
-              "name": "initialized",
-              "type": "bool"
-            },
-            {
               "internalType": "uint256",
               "name": "id",
               "type": "uint256"
@@ -545,24 +457,9 @@
               "type": "bytes32"
             },
             {
-              "internalType": "bool",
-              "name": "listed",
-              "type": "bool"
-            },
-            {
-              "internalType": "uint256",
-              "name": "price",
-              "type": "uint256"
-            },
-            {
               "internalType": "address",
               "name": "owner",
               "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "achievements",
-              "type": "uint256"
             }
           ],
           "internalType": "struct BlueDream.t_token[]",
@@ -571,24 +468,6 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "providedKey",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "address",
-          "name": "newOwner",
-          "type": "address"
-        }
-      ],
-      "name": "giveKeysTo",
-      "outputs": [],
-      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -618,32 +497,9 @@
     {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "providedKey",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "price",
-          "type": "uint256"
-        }
-      ],
-      "name": "listToken",
-      "outputs": [],
-      "stateMutability": "payable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "providedKey",
-          "type": "bytes32"
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
         },
         {
           "internalType": "string",
@@ -703,6 +559,19 @@
     },
     {
       "inputs": [],
+      "name": "paused",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "renounceOwnership",
       "outputs": [],
       "stateMutability": "nonpayable",
@@ -734,35 +603,27 @@
     {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "providedKey",
-          "type": "bytes32"
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
         },
         {
           "internalType": "uint256",
-          "name": "access",
+          "name": "tokenId",
           "type": "uint256"
         },
         {
-          "internalType": "bytes32",
-          "name": "key",
-          "type": "bytes32"
+          "internalType": "bytes",
+          "name": "_data",
+          "type": "bytes"
         }
       ],
-      "name": "setAccessKey",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "price",
-          "type": "uint256"
-        }
-      ],
-      "name": "setAchievementsPrice",
+      "name": "safeTransferFrom",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -781,125 +642,6 @@
         }
       ],
       "name": "setApprovalForAll",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "providedKey",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_mode",
-          "type": "uint256"
-        }
-      ],
-      "name": "setContractMode",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "string",
-          "name": "URI",
-          "type": "string"
-        }
-      ],
-      "name": "setContractURI",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "price",
-          "type": "uint256"
-        }
-      ],
-      "name": "setListingPrice",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "price",
-          "type": "uint256"
-        }
-      ],
-      "name": "setMintPrice",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "price",
-          "type": "uint256"
-        }
-      ],
-      "name": "setNameChangePrice",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "percentage",
-          "type": "uint256"
-        }
-      ],
-      "name": "setRoyalty",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "providedKey",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "achievements",
-          "type": "uint256"
-        }
-      ],
-      "name": "setTokenAchievements",
-      "outputs": [],
-      "stateMutability": "payable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "string",
-          "name": "URI",
-          "type": "string"
-        }
-      ],
-      "name": "setTokenURI",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -934,19 +676,6 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "providedKey",
-          "type": "bytes32"
-        }
-      ],
-      "name": "throwAwayTheKeys",
-      "outputs": [],
-      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -1019,25 +748,6 @@
     },
     {
       "inputs": [],
-      "name": "vaultBalance",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "providedKey",
-          "type": "bytes32"
-        }
-      ],
       "name": "withdrawVault",
       "outputs": [],
       "stateMutability": "nonpayable",

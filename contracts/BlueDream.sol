@@ -1,0 +1,224 @@
+pragma solidity 0.8.9;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "./ERC721A.sol";
+
+/// @title Blue Dream NFTs
+/// @author Arkonviox (https://twitter.com/0xArkonviox)
+
+contract BlueDream is ERC721A, Ownable, Pausable, ReentrancyGuard {
+
+  event mintOK();
+  event nameChangeOK();
+
+  uint256 private constant maxSupply = 10000;
+
+  address controller;
+  string private _contractURI;
+  string private _tokenURI;
+
+  struct t_token {
+
+    uint256 tokenId;
+    string name;
+    bytes32 dna;
+    bytes32 attributes;
+    address owner;
+  }
+
+  mapping(uint256 => t_token) tokens;
+  mapping(address => uint256[]) tokensOfOwner;
+
+  modifier controllerOnly() {
+
+    if (_msgSenderERC721A() != controller)
+      revert("SENDER_NOT_THE_CONTROLLER_ADDRESS");
+    _;
+  }
+
+  constructor(address _controller)
+    ERC721A("Blue Dream", "MU") {
+    
+      controller = _controller;
+      _contractURI = "";
+      _tokenURI = "";
+  }
+
+  function _rand()
+    private view
+    returns (bytes32) {
+
+      return keccak256(
+        abi.encodePacked(
+          block.timestamp,
+	  block.number,
+          block.timestamp ^ block.number % 128,
+          block.timestamp | block.number % 256,
+          msg.sender
+        )
+      );
+  }
+
+  function _isSenderTokenOwner(uint256 tokenId)
+    private view {
+
+    if (tokens[tokenId].tokenId == 0)
+      revert("TOKEN_DOES_NOT_EXIST");
+
+    address ownerAddress = ownerOf(tokenId);
+
+    if (_msgSenderERC721A() != ownerAddress)
+      revert("SENDER_NOT_TOKEN_OWNER");   
+  }
+
+  function _swapTokenOwner(address from, address to, uint tokenId)
+    private {
+
+    tokens[tokenId].owner = to;
+
+    if (from != address(0)) {
+
+      tokensOfOwner[from][tokenId] = tokensOfOwner[from][tokensOfOwner[from].length - 1];
+      tokensOfOwner[from].pop();
+    }
+
+    tokensOfOwner[to].push(tokenId);
+  }
+
+  function mint(address owner, string memory name)
+    public
+    controllerOnly
+    whenNotPaused 
+    nonReentrant
+    payable {
+
+    if (totalSupply() >= maxSupply)
+      revert("MINTED_OUT");
+
+    uint256 tokenId = _nextTokenId();
+    _safeMint(owner, 1);
+
+    tokens[tokenId] = t_token(
+      tokenId,
+      name,
+      _rand(),
+      _rand(),
+      owner
+    );
+    
+    tokensOfOwner[owner].push(tokenId);
+    emit mintOK();
+  }
+
+  function changeName(
+    uint256 tokenId,
+    string memory name)
+
+    public
+    controllerOnly
+    nonReentrant
+    payable {
+
+    _isSenderTokenOwner(tokenId);
+
+    if (bytes(name).length >= 32)
+      revert("NAME_TOO_LONG");
+
+    tokens[tokenId].name = name;
+    emit nameChangeOK();
+  }
+
+  function getToken(uint256 tokenId)
+    public view
+    returns (t_token memory) {
+
+    uint256 totalTokens = totalSupply();
+
+    if (tokenId == 0 || tokenId > totalTokens)
+      tokenId = 1;
+
+    return tokens[tokenId];
+  }
+
+  function getAllTokens(uint256 startIndex, uint256 total)
+    public view
+    returns(t_token[] memory) {
+
+      uint256 totalTokens = totalSupply();
+
+      if (startIndex == 0 || startIndex > totalTokens)
+        startIndex = 1;
+
+      if (total == 0 || total > totalTokens - startIndex)
+        total = totalTokens - startIndex;
+
+      t_token[] memory tokensList = new t_token[](total);
+      if (totalTokens == 0)
+        return tokensList;
+ 
+      for (uint256 index = 0; index < total; index++) {
+
+	t_token storage token = tokens[startIndex + index];
+        tokensList[index] = token;
+      }
+
+      return tokensList;
+  }
+
+  function getTokensOfOwner(address owner, uint startIndex, uint total)
+    public view
+    returns(t_token[] memory) {
+
+    uint256[] memory ownersTokens = tokensOfOwner[owner];
+
+    if (startIndex >= ownersTokens.length)
+      startIndex = 0;
+
+    if (total == 0 || total > ownersTokens.length - startIndex)
+      total = ownersTokens.length - startIndex;
+
+    t_token[] memory tokensList = new t_token[](total);
+
+    if (ownersTokens.length == 0)
+      return tokensList;
+
+    uint256 tokenId = 0;    
+    for (uint256 index = 0; index < total; index++) {
+
+      tokenId = ownersTokens[startIndex + index];
+      tokensList[index] = tokens[tokenId];
+    }
+
+    return tokensList;
+  }
+
+  function withdrawVault()
+    external
+    nonReentrant
+    onlyOwner {
+
+    (bool success,) = msg.sender.call{value: address(this).balance}("");
+    require(success, "TREASURY_TRANSFER_FAILED");
+  }
+
+ function _startTokenId()
+   internal view virtual override
+   returns (uint256) { return 1; }		    
+
+  function _baseURI()
+    internal view virtual override
+    returns (string memory) {
+      return _tokenURI;
+  }
+
+  function _afterTokenTransfers(
+    address from,
+    address to,
+    uint256 startTokenId,
+    uint256 quantity
+  ) internal virtual override {
+      _swapTokenOwner(from, to, startTokenId); 
+  }
+}

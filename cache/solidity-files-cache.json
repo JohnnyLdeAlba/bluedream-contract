@@ -1,83 +1,10 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "/var/www/bluedream-contract/contracts/ERC721A.sol": {
-      "lastModificationDate": 1658363690945,
-      "contentHash": "da2192c20bd3718c0f6853e1af195e2c",
-      "sourceName": "contracts/ERC721A.sol",
-      "solcConfig": {
-        "version": "0.8.9",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "./IERC721A.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.4"
-      ],
-      "artifacts": [
-        "ERC721A",
-        "ERC721A__IERC721Receiver"
-      ]
-    },
-    "/var/www/bluedream-contract/contracts/IERC721A.sol": {
-      "lastModificationDate": 1658346631439,
-      "contentHash": "331832179f0249416690f3acd27bb110",
-      "sourceName": "contracts/IERC721A.sol",
-      "solcConfig": {
-        "version": "0.8.9",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.4"
-      ],
-      "artifacts": [
-        "IERC721A"
-      ]
-    },
-    "/var/www/bluedream-contract/contracts/Lemuria.sol": {
-      "lastModificationDate": 1658370225974,
-      "contentHash": "a92c6177a1c6fac71307c823a902fd5f",
-      "sourceName": "contracts/Lemuria.sol",
+    "/var/www/bluedream-contract/contracts/BlueDream.sol": {
+      "lastModificationDate": 1659680863461,
+      "contentHash": "6314286f0ff7125f3706650de35796a2",
+      "sourceName": "contracts/BlueDream.sol",
       "solcConfig": {
         "version": "0.8.9",
         "settings": {
@@ -104,7 +31,7 @@
       "imports": [
         "@openzeppelin/contracts/access/Ownable.sol",
         "@openzeppelin/contracts/security/ReentrancyGuard.sol",
-        "@openzeppelin/contracts/utils/Strings.sol",
+        "@openzeppelin/contracts/security/Pausable.sol",
         "./ERC721A.sol"
       ],
       "versionPragmas": [
@@ -186,10 +113,10 @@
         "ReentrancyGuard"
       ]
     },
-    "/var/www/bluedream-contract/node_modules/@openzeppelin/contracts/utils/Strings.sol": {
-      "lastModificationDate": 1657759127224,
-      "contentHash": "cf46906c4035f51639a22265066a9e78",
-      "sourceName": "@openzeppelin/contracts/utils/Strings.sol",
+    "/var/www/bluedream-contract/node_modules/@openzeppelin/contracts/security/Pausable.sol": {
+      "lastModificationDate": 1657759127220,
+      "contentHash": "25c8108f36fdd472bc78d4c4af240c11",
+      "sourceName": "@openzeppelin/contracts/security/Pausable.sol",
       "solcConfig": {
         "version": "0.8.9",
         "settings": {
@@ -213,12 +140,52 @@
           }
         }
       },
-      "imports": [],
+      "imports": [
+        "../utils/Context.sol"
+      ],
       "versionPragmas": [
         "^0.8.0"
       ],
       "artifacts": [
-        "Strings"
+        "Pausable"
+      ]
+    },
+    "/var/www/bluedream-contract/contracts/ERC721A.sol": {
+      "lastModificationDate": 1658363690945,
+      "contentHash": "da2192c20bd3718c0f6853e1af195e2c",
+      "sourceName": "contracts/ERC721A.sol",
+      "solcConfig": {
+        "version": "0.8.9",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./IERC721A.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.4"
+      ],
+      "artifacts": [
+        "ERC721A",
+        "ERC721A__IERC721Receiver"
       ]
     },
     "/var/www/bluedream-contract/node_modules/@openzeppelin/contracts/utils/Context.sol": {
@@ -254,6 +221,41 @@
       ],
       "artifacts": [
         "Context"
+      ]
+    },
+    "/var/www/bluedream-contract/contracts/IERC721A.sol": {
+      "lastModificationDate": 1658346631439,
+      "contentHash": "331832179f0249416690f3acd27bb110",
+      "sourceName": "contracts/IERC721A.sol",
+      "solcConfig": {
+        "version": "0.8.9",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.4"
+      ],
+      "artifacts": [
+        "IERC721A"
       ]
     }
   }

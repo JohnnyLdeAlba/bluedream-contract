@@ -1,1 +1,1 @@
-ganache-cli --allowUnlimitedContractSize=true -a -g=9000000
+ganache-cli --allowUnlimitedContractSize=true -a -g=900000000 -l=900000000
