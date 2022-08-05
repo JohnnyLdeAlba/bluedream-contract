@@ -14,10 +14,10 @@ async function main() {
 
   let tokenId = 23;
 
-  message = await contract.connect(deployer).getTokensOfOwner(deployer.address, 15, 10);
+  message = await contract.connect(deployer).changeName(1, "Johnny Trubby");
   console.log("Returned: " + message);
 
-  message = await contract.connect(deployer).getOwnersTotalTokens(deployer.address);
+  message = await contract.connect(deployer).getToken(1);
   console.log("Returned: " + message);
 
   let after = await deployer.getBalance();

@@ -317,7 +317,7 @@
           "components": [
             {
               "internalType": "uint256",
-              "name": "id",
+              "name": "tokenId",
               "type": "uint256"
             },
             {
@@ -371,6 +371,60 @@
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "getOwnersTotalTokens",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getState",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "controller",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "contractURI",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "tokenURI",
+              "type": "string"
+            },
+            {
+              "internalType": "bool",
+              "name": "mintPaused",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct BlueDream.t_state",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint256",
           "name": "tokenId",
           "type": "uint256"
@@ -382,7 +436,7 @@
           "components": [
             {
               "internalType": "uint256",
-              "name": "id",
+              "name": "tokenId",
               "type": "uint256"
             },
             {
@@ -438,7 +492,7 @@
           "components": [
             {
               "internalType": "uint256",
-              "name": "id",
+              "name": "tokenId",
               "type": "uint256"
             },
             {
@@ -642,6 +696,34 @@
         }
       ],
       "name": "setApprovalForAll",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "__controller",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "__contractURI",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "__tokenURI",
+          "type": "string"
+        },
+        {
+          "internalType": "bool",
+          "name": "pauseMint",
+          "type": "bool"
+        }
+      ],
+      "name": "setState",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

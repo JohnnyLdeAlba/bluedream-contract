@@ -4,7 +4,7 @@ async function main() {
 
   const [deployer, account1] = await ethers.getSigners();
 
-  const contract = new ethers.Contract("0x06c7Fa64C2f6FCB0De0b2B3c6daEF11Bc5b36130", contractABI, deployer);
+  const contract = new ethers.Contract("0xC94635CF2e22c7d5122B573A035D04754D4C1506", contractABI, deployer);
 
   let before = await deployer.getBalance();
   console.log("Account balance before: " + before);
@@ -12,13 +12,22 @@ async function main() {
   let message = await contract.name();
   console.log("Returned: " + message);
 
+  // await contract.connect(deployer).collect({value: ethers.utils.parseEther("1.0")});
+
+  message = await deployer.getBalance();
+  console.log("Account balance before: " + message);
+
+  message = await ethers.provider.getBalance(contract.address);
+  console.log("Contract balance: " + message);
+
   let tokenId = 23;
 
-  message = await contract.connect(deployer).getTokensOfOwner(deployer.address, 15, 10);
+  message = await contract.connect(deployer).setState(deployer.address, "marky", "mark", false);
+  message = await contract.connect(deployer).getState();
   console.log("Returned: " + message);
 
-  message = await contract.connect(deployer).getOwnersTotalTokens(deployer.address);
-  console.log("Returned: " + message);
+  message = await ethers.provider.getBalance(contract.address);
+  console.log("Contract balance: " + message);
 
   let after = await deployer.getBalance();
   console.log("Account balance after: " + after);

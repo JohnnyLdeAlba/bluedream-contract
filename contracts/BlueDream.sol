@@ -1,13 +1,14 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./ERC721A.sol";
 
 /// @title Blue Dream NFTs
 /// @author Arkonviox (https://twitter.com/0xArkonviox)
 
-contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
+contract BlueDream is ERC721A, Ownable, Pausable, ReentrancyGuard {
 
   event mintOK();
   event nameChangeOK();
@@ -17,6 +18,14 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   address controller;
   string private _contractURI;
   string private _tokenURI;
+
+  struct t_state {
+
+    address controller;
+    string contractURI;
+    string tokenURI;
+    bool mintPaused;
+  }
 
   struct t_token {
 
@@ -30,7 +39,7 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
   uint256 randomIndex = 0;
   mapping(uint256 => t_token) tokens;
   mapping(address => uint256[]) tokensOfOwner;
-  mapping(address => uint256) ownerTotalTokens;
+  mapping(address => uint256) ownersTotalTokens;
 
   modifier controllerOnly() {
 
@@ -95,19 +104,19 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
           tokensOfOwner[from][tokenIndex] = tokensOfOwner[from][tokensOfOwner[from].length - 1];
           tokensOfOwner[from].pop();
-	  ownerTokenTotals[from]--;
+	  ownersTotalTokens[from]--;
         }
       }
     }
 
-    ownerTokenTotals[to]++;
+    ownersTotalTokens[to]++;
     tokensOfOwner[to].push(tokenId);
   }
 
   function mint(address owner, string memory name)
     public
     controllerOnly
-    whenNotPaused 
+    whenNotPaused
     nonReentrant
     payable {
 
@@ -134,7 +143,6 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
     public
     controllerOnly
-    nonReentrant
     payable {
 
     _isSenderTokenOwner(tokenId);
@@ -158,9 +166,15 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     return tokens[tokenId];
   }
 
+  function getOwnersTotalTokens(address owner)
+    public view
+    returns (uint256) {
+      return ownersTotalTokens[owner];
+  }
+
   function getAllTokens(uint256 startIndex, uint256 total)
     public view
-    returns(t_token[] memory) {
+    returns (t_token[] memory) {
 
       uint256 totalTokens = totalSupply();
 
@@ -220,6 +234,33 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     require(success, "TREASURY_TRANSFER_FAILED");
   }
 
+  function getState()
+    public view
+    onlyOwner
+    returns (t_state memory) {
+      return t_state(controller, _contractURI, _tokenURI, paused());
+  }
+
+  function setState(
+    address __controller,
+    string calldata __contractURI,
+    string calldata __tokenURI,
+    bool pauseMint)
+    external
+    onlyOwner {
+
+      controller = __controller;
+      _contractURI = __contractURI;
+      _tokenURI = __tokenURI;
+      
+      if (pauseMint) {
+        _pause();
+      }
+      else {
+        _unpause();
+      }
+  }
+
   function _startTokenId()
    internal view virtual override
    returns (uint256) { return 1; }		    
@@ -229,8 +270,6 @@ contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
     returns (string memory) {
       return _tokenURI;
   }
-
-  // Need to pause transfers! and mints!
 
   function _afterTokenTransfers(
     address from,

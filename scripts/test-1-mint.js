@@ -4,7 +4,7 @@ async function main() {
 
   const [deployer, account1] = await ethers.getSigners();
 
-  const contract = new ethers.Contract("0x927824e5AE4BFC312EBAe768f4A0F78025136d87", contractABI, deployer);
+  const contract = new ethers.Contract("0x2A5A3Ad7F20059a48c7d253D9f93b0e7460806c7", contractABI, deployer);
 
   let before = await deployer.getBalance();
   console.log("Account balance before: " + before);
@@ -14,7 +14,8 @@ async function main() {
 
   let tokenId = 23;
 
-  await contract.connect(deployer).mint(deployer.address, "Bruno");
+  // await contract.connect(account1).mint(deployer.address, "Bruno");
+  await contract.connect(account1).changeName(1, "Bruno");
 
   message = await contract.getToken(tokenId);
   console.log("Returned: " + message);
