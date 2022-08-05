@@ -2,18 +2,17 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
 import "./ERC721A.sol";
 
 /// @title Blue Dream NFTs
 /// @author Arkonviox (https://twitter.com/0xArkonviox)
 
-contract BlueDream is ERC721A, Ownable, Pausable, ReentrancyGuard {
+contract BlueDream is ERC721A, Ownable, ReentrancyGuard {
 
   event mintOK();
   event nameChangeOK();
 
-  uint256 private constant maxSupply = 10000;
+  uint256 private constant maxSupply = 20;
 
   address controller;
   string private _contractURI;
@@ -28,8 +27,10 @@ contract BlueDream is ERC721A, Ownable, Pausable, ReentrancyGuard {
     address owner;
   }
 
+  uint256 randomIndex = 0;
   mapping(uint256 => t_token) tokens;
   mapping(address => uint256[]) tokensOfOwner;
+  mapping(address => uint256) ownerTotalTokens;
 
   modifier controllerOnly() {
 
@@ -44,18 +45,25 @@ contract BlueDream is ERC721A, Ownable, Pausable, ReentrancyGuard {
       controller = _controller;
       _contractURI = "";
       _tokenURI = "";
+      randomIndex = 1;
   }
 
   function _rand()
-    private view
+    private
     returns (bytes32) {
+
+      if (randomIndex > 65536) {
+        randomIndex = 1;
+      }
+      else randomIndex++;
 
       return keccak256(
         abi.encodePacked(
+          randomIndex * 2,
           block.timestamp,
-	  block.number,
-          block.timestamp ^ block.number % 128,
-          block.timestamp | block.number % 256,
+	  block.number + randomIndex * 3,
+          block.timestamp ^ block.number + randomIndex * 5 % 128,
+          block.timestamp | block.number + randomIndex * 7 % 256,
           msg.sender
         )
       );
@@ -78,12 +86,21 @@ contract BlueDream is ERC721A, Ownable, Pausable, ReentrancyGuard {
 
     tokens[tokenId].owner = to;
 
+    uint256 tokenIndex = 0;
     if (from != address(0)) {
 
-      tokensOfOwner[from][tokenId] = tokensOfOwner[from][tokensOfOwner[from].length - 1];
-      tokensOfOwner[from].pop();
+      for (uint256 index = 0; index < tokensOfOwner[from].length; index++) {
+    
+        if (tokensOfOwner[from][index] == tokenId) {
+
+          tokensOfOwner[from][tokenIndex] = tokensOfOwner[from][tokensOfOwner[from].length - 1];
+          tokensOfOwner[from].pop();
+	  ownerTokenTotals[from]--;
+        }
+      }
     }
 
+    ownerTokenTotals[to]++;
     tokensOfOwner[to].push(tokenId);
   }
 
@@ -108,7 +125,6 @@ contract BlueDream is ERC721A, Ownable, Pausable, ReentrancyGuard {
       owner
     );
     
-    tokensOfOwner[owner].push(tokenId);
     emit mintOK();
   }
 
@@ -151,8 +167,8 @@ contract BlueDream is ERC721A, Ownable, Pausable, ReentrancyGuard {
       if (startIndex == 0 || startIndex > totalTokens)
         startIndex = 1;
 
-      if (total == 0 || total > totalTokens - startIndex)
-        total = totalTokens - startIndex;
+      if (total == 0 || total > totalTokens + 1 - startIndex)
+        total = totalTokens + 1 - startIndex;
 
       t_token[] memory tokensList = new t_token[](total);
       if (totalTokens == 0)
@@ -171,7 +187,7 @@ contract BlueDream is ERC721A, Ownable, Pausable, ReentrancyGuard {
     public view
     returns(t_token[] memory) {
 
-    uint256[] memory ownersTokens = tokensOfOwner[owner];
+    uint256[] storage ownersTokens = tokensOfOwner[owner];
 
     if (startIndex >= ownersTokens.length)
       startIndex = 0;
@@ -185,7 +201,8 @@ contract BlueDream is ERC721A, Ownable, Pausable, ReentrancyGuard {
       return tokensList;
 
     uint256 tokenId = 0;    
-    for (uint256 index = 0; index < total; index++) {
+    uint256 index = 0;
+    for (index = 0; index < total; index++) {
 
       tokenId = ownersTokens[startIndex + index];
       tokensList[index] = tokens[tokenId];
@@ -203,7 +220,7 @@ contract BlueDream is ERC721A, Ownable, Pausable, ReentrancyGuard {
     require(success, "TREASURY_TRANSFER_FAILED");
   }
 
- function _startTokenId()
+  function _startTokenId()
    internal view virtual override
    returns (uint256) { return 1; }		    
 
@@ -212,6 +229,8 @@ contract BlueDream is ERC721A, Ownable, Pausable, ReentrancyGuard {
     returns (string memory) {
       return _tokenURI;
   }
+
+  // Need to pause transfers! and mints!
 
   function _afterTokenTransfers(
     address from,
